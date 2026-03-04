@@ -17,7 +17,7 @@ Source: <https://learning.nceas.ucsb.edu/2024-10-coreR/session_05.html>
 
 ## About the data
 
-In this dataset, because we care about the Redfiled ratio that is the ratio of N:P. to able to get the ratio, we need to get concentration of N from NO3, NH4 and NO2 to get the concentration of N. For the concentration of P, we use the data from P-column. 
+In this dataset, because we care about the Redfiled ratio that is the ratio of N:P. to able to get the ratio, we need to get concentration of N from NO3, NH4 and NO2 to get the concentration of N. For the concentration of P, we use the data from P-column.
 
 The seawater chemistry dataset used here is `BGchem2008data.csv` (downloaded previously in the course).
 
