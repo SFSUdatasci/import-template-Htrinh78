@@ -1,0 +1,34 @@
+---
+title: "R Practice: Tidy Data and Joins"
+author: Huong Trinh
+format:
+  html:
+    toc: true
+    toc-depth: 3
+execute:
+  warning: false
+  message: false
+---
+
+## Introduction
+
+In this assignment I examine a UV–visible spectroscopy dataset collected for my research on styrene oxide isomerase (SOI) with the thiol ligand SNAc. The goal is to use this real research dataset to evaluate whether it is tidy and to think about how its current structure affects downstream analysis and visualization.
+
+## Data
+
+For this exercise I use a CSV file named SOI-with-SNAc-2.csv that contains full UV–vis spectra recorded at different SNAc concentrations and volumes. Each spectrum is stored in two columns, with one column for wavelength (in nm) and a paired column for absorbance, and the file includes many such wavelength–absorbance pairs for different titration steps (for example, “Wavelength (nm), Abs” for baseline, then “Wavelength (nm), Abs” for SNAc-0, SNAc-1, SNAc-2, and so on). The data therefore have one row per wavelength point, and across the row there are many absorbance values corresponding to different experimental conditions rather than one condition per row.
+
+```{r}
+library(readr)
+library(dplyr)
+
+# import the SOI UV-vis dataset
+soi_raw <- read_csv("raw_data/SOI with SNAc.csv")
+
+# look at the structure and first few rows
+glimpse(soi_raw)
+
+
+```
+
+This dataset is not tidy because it does not follow “one variable per column” and “one observation per row.” Instead of one wavelength column and one absorbance column, the file repeats many wavelength–absorbance pairs across the same row. The column names also mix several pieces of information (baseline or SNAc, concentration, and volume), instead of putting these into separate variables. This wide layout makes it hard to filter, group, or plot the data by experimental condition.
