@@ -1,0 +1,219 @@
+---
+title: "R Practice: Tidy Data and Joins"
+author: Huong Trinh
+format:
+  html:
+    toc: true
+    toc-depth: 3
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+library(readr)
+library(dplyr)
+library(here)
+library(lubridate) 
+```
+
+When I load the libraries, I see a message. It says the packages loaded correctly, and some functions have the same names as functions in base R, so R will now use the versions from dplyr and lubridate. It also tells me which folder is my working directory for the here package.
+
+# Exercise 1: Practice Joins
+
+## 1. Read in the data
+
+```{r}
+# read in data from the data directory after manually downloading data 
+bird_observations <- read_csv(here::here("raw_data/52_pp52_birds_1.csv"))
+surveys <- read_csv(here::here("raw_data/52_pp52_surveys_1.csv"))
+sites <- read_csv(here::here("raw_data/52_pp52_sites_1.csv"))
+taxalist <- read_csv(here::here("raw_data/52_pp52_taxalist_1.csv"))
+```
+
+## 2. Get familiar with the data
+
+```{r}
+# returns dimensions of the dataframe by number of rows and number of cols
+dim(bird_observations)
+
+# returns the top six rows of the dataframe
+head(bird_observations)
+
+# returns all the columns and some info about the cols
+glimpse(bird_observations)
+
+# similar to glimpse but returns some summary statistics about the cols
+summary(bird_observations)
+
+# returns column names 
+names(bird_observations)
+
+# returns unique values in a column. In this case we can see all the different bird species IDs
+unique(bird_observations$species_id)
+```
+
+## 3. Create a subset **of `bird_observations`**
+
+```{r}
+# create a subset that only contains BHCO and RWBL from bird-observation, and from sites with site ID LI-W and NU-C
+birds_subset <- bird_observations %>% 
+  filter(species_id %in% c("BHCO", "RWBL")) %>% 
+  filter(site_id %in% c("LI-W", "NU-C"))
+```
+
+filter () - function to keep only the rows that match certain conditions in the data. In this case, `filter()` keeps only the rows where `species_id` is BHCO or RWBL, and where `site_id` is LI-W or NU-C
+
+## 4. **Use `left_join()` to merge `birds_subset` with the tables `sites`**
+
+```{r}
+# syntax using pipe
+birds_left <- birds_subset %>% 
+  left_join(y = sites, by = "site_id")
+# don't see x = birds_subset here because piping in birds_subset means it automatically assumes birds_subset as x.
+
+# syntax without pipe
+birds_left <- left_join(x = birds_subset, y = sites, by = "site_id")
+```
+
+4a. First, I start with birds_subset as my left table and sites as my right table. Next, I use left_join(birds_subset, sites, by = "site_id") to match rows that have the same site_id. The outcome will keep all rows and all columns from birds_subset, and add the columns park_code, park_district, park_name, point_code, point_location, and park_acreage from sites only for the sites NU-C and LI-W.
+
+4b. I use a left join to add the sites information to birds_subset and save it as birds_left. This joins the two tables using site_id as the key and keeps all rows from birds_subset with the matching site columns added from sites. When I look at the output, birds_left has the same number of rows as birds_subset and includes the extra site columns only for NU-C and LI-W, which is consistent with what I expected.
+
+## 5. **Use `full_join()` to merge `birds_subset` and `sites` tables**
+
+```{r}
+# syntax using pipe
+birds_full <- birds_subset %>% 
+  full_join(y = sites, by = "site_id")
+
+# syntax without pipe
+birds_full <- full_join(x = birds_subset, y = sites, by = "site_id")
+```
+
+5a. For a full_join() between birds_subset and sites, I expect to see all columns and all rows from both tables combined in one data frame. That means every row from birds_subset and every row from sites will appear, matched by site_id when possible, and where there is no match the new cells will contain NA values.
+
+5b. This code makes a new data frame birds_full that has all rows and columns from both birds_subset and sites, matched by site_id, with NA where there is no match.
+
+## 6. **Use `inner_join()` to merge `birds_subset` and `taxalist` data**
+
+```{r}
+# syntax using pipe
+birds_inner <- birds_subset %>% 
+  inner_join(y = taxalist, by = "species_id")
+
+# syntax without pipe
+birds_inner <- inner_join(x = birds_subset, y = taxalist, by = "species_id" )
+```
+
+6a. For an inner_join() between birds_subset and taxalist, I expect to see only the rows where the species_id appears in both tables. The new data frame will keep all columns from birds_subset and add the taxalist columns like common_name and asu_itis, but only for species that are in both data sets.
+
+6b. I used inner_join() to combine birds_subset with taxalist by species_id and saved the result as birds_inner. In birds_inner, I only see rows for species that are in both tables, and I keep all the bird observation columns plus the new columns common_name and asu_itis from taxalist.
+
+```{r}
+# syntax using pipe
+birds_inner_left <- birds_subset %>% 
+  left_join(y = taxalist, by = "species_id")
+
+# syntax without pipe
+birds_inner_left <- left_join(x = birds_subset, y = taxalist, by = "species_id")
+```
+
+6d. This makes sense because in this data set every species_id in birds_subset also exists in taxalist, so left_join() and inner_join() give the same rows. The results would be different if birds_subset had some species that were not in taxalist: then left_join() would keep those extra bird rows with NA names, but inner_join() would drop them.
+
+# **Exercise 2: Practice Wrangling & Joining Data**
+
+## 7. **Wrangle `bird_observations` data and merge the data with all the other tables (`sites`, `surveys`, and `taxalist`)**
+
+```{r}
+bird_observations <- bird_observations %>% 
+  rename(bird_obs_notes = notes)
+```
+
+```{r}
+# create a subset that contains all observations in the birds_observations data frame
+# join the taxalist, sites and surveys tables to it
+# finally limit to only columns survey_date, common_name, park_name, bird_count, and observer.
+bird_obs_subset <- bird_observations %>% 
+  full_join(y = taxalist, by = "species_id") %>% 
+  full_join(y = sites, by = "site_id") %>% 
+  full_join(y = surveys, by = c("site_id", "survey_id")) %>%  
+  select(survey_date, common_name, park_name, bird_count, observer)
+```
+
+7b. I start with the bird_observations table, which has one row for each bird sighting. Then I use full_join() three times to add species names from taxalist, park information from sites, and survey information from surveys, matching them by species_id, site_id, and survey_id. Finally, I use select() to keep only the columns I care about: survey_date, common_name, park_name, bird_count, and observer.
+
+## 8. **Explore `observer` data and fix the values within this column so that all values are in the same format**
+
+```{r}
+unique(bird_obs_subset$observer)
+```
+
+8a. There are 6 different observer values: “B. Rambo”, “J. Lemmer”, “D. Stuart”, “C. Putnam”, “S. Lerman”, and “Josh Burns”. The value that is unlike the others is NA, because it is missing instead of a name.
+
+```{r}
+bird_obs_subset <- bird_obs_subset %>% 
+  mutate(observer = if_else(condition = observer == "Josh Burns", 
+                            true = "J. Burns", 
+                            false = observer))
+
+unique(bird_obs_subset$observer)
+```
+
+8b. use the mutate() function to make a change to an entire column.
+
+# 9. **Assignment a04: Use a new package `lubridate` to wrangle the date data and find the total number of birds by park and month**
+
+## Introduction
+
+In this assignment, I use bird survey data from the CAP LTER project to practice data wrangling in R. I focus on a subset of bird observations from four parks (Lindo, Orme, Palomino, and Sonrisa) and examine how the total number of birds changes across months using the packages lubridate and dplyr.
+
+## Data
+
+For this assignment I work with a cleaned data frame called bird_obs_subset, which has one row for each bird observation. This table includes the columns survey_date, survey_month, common_name, park_name, bird_count, and observer, and it was created earlier in the worksheet by joining the original bird observations with the site, survey, and taxonomic tables and then keeping only these key variables.
+
+## Analysis 
+
+First, I created a new column survey_month in bird_obs_subset using lubridate::month(survey_date) to extract the month number (1–12) from each survey date, and then converted this column to a factor so that each month is treated as a separate category. I then used relocate() to move survey_month so it appears immediately after survey_date, keeping the time information together in the data frame. Next, I filtered the data to include only four parks—Lindo, Orme, Palomino, and Sonrisa. Using filter(), I created a smaller data frame bird_obs_subset_small containing only observations from these parks. Finally, I summarized bird abundance by park and month with a grouped summary that calculates the total number of birds for each combination of park_name and survey_month.
+
+```{r}
+# Add a new column with the month number
+bird_obs_subset <- bird_obs_subset %>%
+  mutate(survey_month = month(survey_date))   
+
+# Convert that month number to a factor
+bird_obs_subset <- bird_obs_subset %>%
+  mutate(survey_month = factor(survey_month))
+
+```
+
+```{r}
+# Move the new survey_month column to immediately after the survey_date column.
+bird_obs_subset <- bird_obs_subset %>%
+  relocate(survey_month, .after = survey_date)
+
+```
+
+```{r}
+# Filter to only include parks Lindo, Orme, Palomino, and Sonrisa.
+bird_obs_subset_small <- bird_obs_subset %>%
+  filter(park_name == "Lindo" |
+         park_name == "Orme" |
+         park_name == "Palomino" |
+         park_name == "Sonrisa")
+
+```
+
+```{r}
+# Total number of birds by park and month 
+birds_by_park_month <- bird_obs_subset_small %>%
+  group_by(park_name, survey_month) %>%
+  summarize(total_birds = sum(bird_count))
+
+birds_by_park_month
+
+```
+
+## Summary 
+
+The resulting birds_by_park_month table shows, for each of the four parks and each month in the data, the total number of birds observed during the surveys. This summary highlights how bird abundance changes across parks and seasons in the study area. The wrangling steps I applied—using month(), mutate(), relocate(), filter(), group_by(), and summarize().
