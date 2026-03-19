@@ -1,0 +1,52 @@
+---
+---
+title: "Cleaning and Wrangling Data"
+author: Huong Trinh
+format:
+  html:
+    toc: true
+    toc-depth: 3
+execute:
+  warning: false
+  message: false
+---
+
+## Introduction
+
+In this report, I analyze Alaska commercial salmon catch data by region and year. This dataset is important because it shows how salmon catch changes in different regions and over time. In my analysis, I clean and reorganize the data first, and then I calculate the average catch for each region to better understand the differences between regions.
+
+## Data
+
+This data comes from the he Alaska Department of Fish and Game report: ALASKA COMMERCIAL SALMON CATCHES, 1878-1997. It includes commercial salmon catch records by management region. For this report, I used the public data file df35b.302.1 on the KNB archive and imported it into R. I accessed this dataset on March 8, 2026 for my analysis.
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+# First, I read the salmon catch data from the online CSV file and save it as catch_original.
+catch_original <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1", method = "libcurl"))
+
+```
+
+## Data processing
+
+```{r}
+# I start with the original dataset and create a new object called mean_region for the cleaned and summarized result.
+mean_region <- catch_original %>%
+  select(-All, -notesRegCode) %>% # I remove the All and notesRegCode columns because they are not needed for my analysis.
+  mutate(Chinook = if_else(Chinook == "I", "1", Chinook)) %>% # I fix an incorrect value in the Chinook column by changing "I" to "1" because this value was read incorrectly.
+  mutate(Chinook = as.numeric(Chinook)) %>% # I convert the Chinook column from character type to numeric type so I can use it in calculations.
+  pivot_longer(-c(Region, Year), # I reshape the data from wide format to long format 
+               names_to = "species", # all salmon species names go into "species" column
+               values_to = "catch") %>% # all catch values go into one column called catch.
+  mutate(catch = catch*1000) %>% # I multiply the catch values by 1000.
+  group_by(Region) %>% # I group the data by Region 
+  summarize(mean_catch = mean(catch)) %>% # I summarize the grouped data by finding the mean catch for each region and save this new summary as mean_catch.
+  arrange(desc(mean_catch))  # I sort the result from highest mean catch to lowest.
+
+head(mean_region) # I display the first rows of the final summary table to see the results.
+```
+
+## Discussion
+
+The results show that salmon catch is different across regions. SSE has the highest mean catch, and BER has the lowest mean catch. This means some regions catch much more salmon than other regions.
