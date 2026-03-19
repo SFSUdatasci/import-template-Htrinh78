@@ -23,7 +23,7 @@ library(readr)
 library(dplyr)
 
 # import the SOI UV-vis dataset
-soi_raw <- read_csv("raw_data/SOI with SNAc.csv")
+soi_raw <- read_csv("../raw_data/SOI_SNAc.csv")
 
 # look at the structure and first few rows
 glimpse(soi_raw)
