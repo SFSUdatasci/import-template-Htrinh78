@@ -17,6 +17,8 @@ Source: <https://learning.nceas.ucsb.edu/2024-10-coreR/session_05.html>
 
 ## About the data
 
+In this dataset, because we care about the Redfiled ratio that is the ratio of N:P. to able to get the ratio, we need to get concentration of N from NO3, NH4 and NO2 to get the concentration of N. For the concentration of P, we use the data from P-column. 
+
 The seawater chemistry dataset used here is `BGchem2008data.csv` (downloaded previously in the course).
 
 -   Date downloaded: August 8, 2025
@@ -40,7 +42,7 @@ Quarto runs R in the same way as a script: objects only exist after the chunks t
 Using `here()` is a convenient way to build paths relative to your project root (e.g., your `.qmd` might live in `scripts/` while data lives in `data/`).
 
 ```{r}
-bg_chem <- read_csv(here::here("data", "BGchem2008data.csv"))
+bg_chem <- read_csv(here::here("raw data", "BGchem2008data.csv"))
 ```
 
 (Optional) Quick peek at the data:
@@ -92,6 +94,8 @@ plot(
   main = "Ocean water samples: total N vs P"
 )
 ```
+
+Comment: The plot shows a positive relationship between phosphate and total nitrogen. As phosphate incrreases, total nitrogen increases as well. The points are not all linear, many samples at low P and low N, and another grapu at higher P with higer N, it is suggesting different conditions.
 
 # Conclusion
 
